@@ -8,7 +8,7 @@ Implementation of the [Circuit Breaker](http://martinfowler.com/bliki/CircuitBre
 
 ## Requirements
 
-*>=* iOS 8, Xcode 7, Swift 2.0
+*>=* iOS 10.3, Xcode 10.2, Swift 5.0
 
 ## Installation
 You can either use [Carthage](https://github.com/Carthage/Carthage) and then import the framework or simply copy the file `CircuitBreaker.swift` to your project.
