@@ -11,18 +11,17 @@ public class CircuitBreaker {
         case HalfOpen
     }
     
-    public let timeout: NSTimeInterval
+    public let timeout: TimeInterval
     public let maxRetries: Int
-    public let timeBetweenRetries: NSTimeInterval
+    public let timeBetweenRetries: TimeInterval
     public let exponentialBackoff: Bool
-    public let resetTimeout: NSTimeInterval
-    public var call: (CircuitBreaker -> Void)?
-    public var didTrip: ((CircuitBreaker, ErrorType?) -> Void)?
+    public let resetTimeout: TimeInterval
+    public var call: ((CircuitBreaker) -> Void)?
+    public var didTrip: ((CircuitBreaker, Error?) -> Void)?
     public private(set) var failureCount = 0
     
     public var state: State {
-        if let lastFailureTime = lastFailureTime
-            where (failureCount > maxRetries) &&
+        if let lastFailureTime = lastFailureTime, (failureCount > maxRetries) &&
                 (NSDate().timeIntervalSince1970 - lastFailureTime) > resetTimeout {
                     return .HalfOpen
         }
@@ -34,16 +33,16 @@ public class CircuitBreaker {
         return .Closed
     }
     
-    private var lastError: ErrorType?
-    private var lastFailureTime: NSTimeInterval?
-    private var timer: NSTimer?
+    private var lastError: Error?
+    private var lastFailureTime: TimeInterval?
+    private var timer: Timer?
     
     public init(
-        timeout: NSTimeInterval = 10,
+        timeout: TimeInterval = 10,
         maxRetries: Int = 2,
-        timeBetweenRetries: NSTimeInterval = 2,
+        timeBetweenRetries: TimeInterval = 2,
         exponentialBackoff: Bool = true,
-        resetTimeout: NSTimeInterval = 10) {
+        resetTimeout: TimeInterval = 10) {
             self.timeout = timeout
             self.maxRetries = maxRetries
             self.timeBetweenRetries = timeBetweenRetries
@@ -68,7 +67,7 @@ public class CircuitBreaker {
         reset()
     }
     
-    public func failure(error: ErrorType? = nil) {
+    public func failure(error: Error? = nil) {
         timer?.invalidate()
         lastError = error
         lastFailureTime = NSDate().timeIntervalSince1970
@@ -93,10 +92,10 @@ public class CircuitBreaker {
     
     private func doCall() {
         call?(self)
-        startTimer(timeout, selector: #selector(didTimeout(_:)))
+        startTimer(delay: timeout, selector: #selector(CircuitBreaker.didTimeout(_:)))
     }
     
-    @objc private func didTimeout(timer: NSTimer) {
+    @objc private func didTimeout(_ timer: Timer) {
         failure()
     }
     
@@ -104,10 +103,10 @@ public class CircuitBreaker {
     
     private func retryAfterDelay() {
         let delay = exponentialBackoff ? pow(timeBetweenRetries, Double(failureCount)) : timeBetweenRetries
-        startTimer(delay, selector: #selector(shouldRetry(_:)))
+        startTimer(delay: delay, selector: #selector(CircuitBreaker.shouldRetry(_:)))
     }
     
-    @objc private func shouldRetry(timer: NSTimer) {
+    @objc private func shouldRetry(_ timer: Timer) {
         doCall()
     }
     
@@ -119,10 +118,10 @@ public class CircuitBreaker {
     
     // MARK: - Timer
     
-    private func startTimer(delay: NSTimeInterval, selector: Selector) {
+    private func startTimer(delay: TimeInterval, selector: Selector) {
         timer?.invalidate()
-        timer = NSTimer.scheduledTimerWithTimeInterval(
-            delay,
+        timer = Timer.scheduledTimer(
+            timeInterval: delay,
             target: self,
             selector: selector,
             userInfo: nil,

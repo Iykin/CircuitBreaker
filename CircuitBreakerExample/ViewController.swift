@@ -20,44 +20,47 @@ class ViewController: UIViewController {
             resetTimeout: 2.0
         )
         circuitBreaker?.didTrip = { [weak self] circuitBreaker, error in
-            self?.logInfo("Failure (Code: \((error as! NSError).code)). Tripped! State: \(circuitBreaker.state)")
+            self?.logInfo(info: "Failure (Code: \((error as! NSError).code)). Tripped! State: \(circuitBreaker.state)")
         }
         circuitBreaker?.call = { [weak self] circuitBreaker in
             guard let strongSelf = self else { return }
-            strongSelf.logInfo("Perform call. State: \(circuitBreaker.state), failureCount: \(circuitBreaker.failureCount)")
+            strongSelf.logInfo(info: "Perform call. State: \(circuitBreaker.state), failureCount: \(circuitBreaker.failureCount)")
             
             if strongSelf.callShouldSucceed {
                 strongSelf.testService.successCall() { data, error in
                     circuitBreaker.success()
-                    strongSelf.logInfo("Success. State: \(circuitBreaker.state)")
+                    strongSelf.logInfo(info: "Success. State: \(circuitBreaker.state)")
                 }
             } else {
                 strongSelf.testService.failureCall() { data, error in
                     if circuitBreaker.failureCount < circuitBreaker.maxRetries {
-                        strongSelf.logInfo("Failure. Will retry. State: \(circuitBreaker.state)")
+                        strongSelf.logInfo(info: "Failure. Will retry. State: \(circuitBreaker.state)")
                     }
-                    circuitBreaker.failure(error)
+                    circuitBreaker.failure(error: error)
                 }
             }
         }
     }
     
-    @IBAction func didTapFailureCall(sender: AnyObject) {
-        logInfo("> Start Failure Call")
+    @IBAction func didTapFailureCall(_ sender: UIButton) {
+        logInfo(info: "> Start Failure Call")
         callShouldSucceed = false
         circuitBreaker?.execute()
     }
     
-    @IBAction func didTapSuccessCall(sender: AnyObject) {
-        logInfo("> Start Success Call")
+    @IBAction func didTapSuccessCall(_ sender: UIButton) {
+        logInfo(info: "> Start Success Call")
         callShouldSucceed = true
         circuitBreaker?.execute()
     }
     
     private func logInfo(info: String) {
-        var newInfo = infoTextView.text
-        newInfo.appendContentsOf("\(info)\n")
-        infoTextView.text = newInfo
+        
+        DispatchQueue.main.async {
+            var newInfo = self.infoTextView.text!
+            newInfo += "\(info)\n"
+            self.infoTextView.text = newInfo
+        }
     }
     
 }
