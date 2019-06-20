@@ -6,9 +6,9 @@ import Foundation
 public class CircuitBreaker {
     
     public enum State {
-        case Closed
-        case Open
-        case HalfOpen
+        case closed
+        case open
+        case halfOpen
     }
     
     public let timeout: TimeInterval
@@ -22,15 +22,15 @@ public class CircuitBreaker {
     
     public var state: State {
         if let lastFailureTime = lastFailureTime, (failureCount > maxRetries) &&
-                (NSDate().timeIntervalSince1970 - lastFailureTime) > resetTimeout {
-                    return .HalfOpen
+                (Date().timeIntervalSince1970 - lastFailureTime) > resetTimeout {
+                    return .halfOpen
         }
         
         if failureCount > maxRetries {
-            return .Open
+            return .open
         }
         
-        return .Closed
+        return .closed
     }
     
     private var lastError: Error?
@@ -56,9 +56,9 @@ public class CircuitBreaker {
         timer?.invalidate()
         
         switch state {
-        case .Closed, .HalfOpen:
+        case .closed, .halfOpen:
             doCall()
-        case .Open:
+        case .open:
             trip()
         }
     }
@@ -70,13 +70,13 @@ public class CircuitBreaker {
     public func failure(error: Error? = nil) {
         timer?.invalidate()
         lastError = error
-        lastFailureTime = NSDate().timeIntervalSince1970
+        lastFailureTime = Date().timeIntervalSince1970
         failureCount += 1
         
         switch state {
-        case .Closed, .HalfOpen:
+        case .closed, .halfOpen:
             retryAfterDelay()
-        case .Open:
+        case .open:
             trip()
         }
     }

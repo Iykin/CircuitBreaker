@@ -93,7 +93,7 @@ class CircuitBreakerTests: XCTestCase {
         )
         
         circuitBreaker.didTrip = { circuitBreaker, error in
-            XCTAssertTrue(circuitBreaker.state == .Open)
+            XCTAssertTrue(circuitBreaker.state == .open)
             XCTAssertTrue(circuitBreaker.failureCount == circuitBreaker.maxRetries + 1)
             XCTAssertTrue((error! as NSError).code == 404)
             circuitBreaker.reset()
@@ -122,10 +122,10 @@ class CircuitBreakerTests: XCTestCase {
             resetTimeout: 2.0
         )
         circuitBreaker.call = { [weak self] circuitBreaker in
-            if circuitBreaker.state == .HalfOpen {
+            if circuitBreaker.state == .halfOpen {
                 self?.testService?.successCall { data, error in
                     circuitBreaker.success()
-                    XCTAssertTrue(circuitBreaker.state == .Closed)
+                    XCTAssertTrue(circuitBreaker.state == .closed)
                     exp.fulfill()
                 }
                 return
